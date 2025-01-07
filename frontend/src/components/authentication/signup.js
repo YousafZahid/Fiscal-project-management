@@ -11,6 +11,8 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+   
+  
     try {
       // Sending signup request to Django backend
       await axiosInstance.post("signup/", { username, email, password });

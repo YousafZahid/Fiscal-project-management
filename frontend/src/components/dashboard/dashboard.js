@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "./navbar";
+import CurrencySelect from "./currencyselect";
+import axiosInstance from "../../api/axiosInstance";
 
 const Dashboard = () => {
   const [showPopup, setShowPopup] = useState(false); // Controls the popup visibility
@@ -11,8 +13,71 @@ const Dashboard = () => {
     liabilities: [],
     expenses: [],
   });
-
+  const [errors, setErrors] = useState({});
   const sections = ["Personal Details", "Annual Income", "Assets", "Liabilities", "Expenses"];
+  const [message, setMessage] = useState("");
+
+
+  const validateField = (section, key, value) => {
+    const newErrors = { ...errors };
+    let errorMessage = "";
+
+    switch (section) {
+      case "personalDetails":
+        if (key === "age" && (!value || value <= 0)) errorMessage = "Age must be greater than 0.";
+        if (key === "maritalStatus" && !value) errorMessage = "Marital Status is required.";
+        if (key === "numberOfChildren" && value && value < 0)
+          errorMessage = "Number of children must be a positive value.";
+        break;
+
+      case "annualIncome":
+        if (key === "category" && (!value || value != "Select Category")) errorMessage = "Category is required.";
+        if (key === "frequency" && !value) errorMessage = "Frequency is required.";
+        if (key === "amount" &&  value <= 0)
+          errorMessage = "Amount must be a positive value.";
+        break;
+
+      case "assets":
+        if (key === "category" && (!value || value === "Select Category")) errorMessage = "Category is required.";
+        if (key === "amount" && (!value || value <= 0)) errorMessage = "Amount must be a positive value.";
+        break;
+
+      case "liabilities":
+        if (key === "category" && (!value || value === "Select Category")) errorMessage = "Category is required.";
+        if (key === "loanAmount" && value && value <= 0) errorMessage = "Loan Amount must be positive.";
+        if (key === "interestRate" && value && value < 0)
+          errorMessage = "Interest Rate must be a positive value.";
+        if (key === "loanTerm" && !value) errorMessage = "Loan Term is required.";
+        if (key === "monthlyPayment" && (!value || value <= 0))
+          errorMessage = "Monthly Payment must be positive.";
+        if (key === "remainingBalance" && (!value || value <= 0))
+          errorMessage = "Remaining Balance must be positive.";
+        if (["startDate", "dueDate"].includes(key)) {
+          const selectedDate = new Date(value);
+          const today = new Date();
+          if (selectedDate < today) errorMessage = `${key === "startDate" ? "Start" : "Due"} Date cannot be in the past.`;
+        }
+        break;
+
+      case "expenses":
+        if (key === "category" && (!value || value === "Select Category")) errorMessage = "Category is required.";
+        if (key === "amount" && (!value || value <= 0)) errorMessage = "Amount must be positive.";
+        break;
+
+      default:
+        break;
+    }
+
+    // Update errors state
+    if (errorMessage) {
+      newErrors[section] = newErrors[section] || {};
+      newErrors[section][key] = errorMessage;
+    } else if (newErrors[section]?.[key]) {
+      delete newErrors[section][key];
+    }
+
+    setErrors(newErrors);
+  };
 
   const handleInputChange = (e, section, index, key) => {
     const { name, value } = e.target;
@@ -21,8 +86,10 @@ const Dashboard = () => {
       const updatedArray = [...formData[section]];
       updatedArray[index][name] = value;
       setFormData({ ...formData, [section]: updatedArray });
+      validateField(section, name, value);
     } else {
       setFormData({ ...formData, [section]: { ...formData[section], [name]: value } });
+      validateField(section, name, value);
     }
   };
 
@@ -36,13 +103,29 @@ const Dashboard = () => {
     setFormData({ ...formData, [section]: updatedArray });
   };
 
+  const renderErrors = (section, key) => {
+    if (errors[section]?.[key]) {
+      return <p style={styles.error}>{errors[section][key]}</p>;
+    }
+    return null;
+  };
+
   const handleNext = () => setCurrentSection((prev) => Math.min(prev + 1, sections.length - 1));
   const handleBack = () => setCurrentSection((prev) => Math.max(prev - 1, 0));
-  const handleSubmit = () => {
-    console.log("Submitted Data: ", formData);
-    alert("Journey details submitted successfully!");
-    setShowPopup(false);
-  };
+ 
+const handleSubmit = async () => {
+ 
+  try {
+    
+    const response = await axiosInstance.post("save-user-data/", formData);
+    setMessage("Data submitted successfully!");
+    console.log("Response from backend:", response.data);
+    setShowPopup(false); // Close the popup after successful submission
+  } catch (error) {
+    console.error("Error submitting data:", error.response?.data || error.message);
+    setMessage("Failed to submit data. Please try again.");
+  }
+};
 
   const renderSection = () => {
     switch (sections[currentSection]) {
@@ -58,6 +141,7 @@ const Dashboard = () => {
                 onChange={(e) => handleInputChange(e, "personalDetails")}
                 style={styles.input}
               />
+               {renderErrors("personalDetails", "age")}
             </label>
             <label>
               Marital Status:
@@ -68,6 +152,7 @@ const Dashboard = () => {
                 onChange={(e) => handleInputChange(e, "personalDetails")}
                 style={styles.input}
               />
+              {renderErrors("personalDetails", "maritalStatus")}
             </label>
             <label>
               Number of Children:
@@ -78,6 +163,8 @@ const Dashboard = () => {
                 onChange={(e) => handleInputChange(e, "personalDetails")}
                 style={styles.input}
               />
+              {renderErrors("personalDetails", "numberOfChildren")}
+
             </label>
           </div>
         );
@@ -99,14 +186,18 @@ const Dashboard = () => {
                   <option value="Passive Income">Passive Income</option>
                   <option value="Other Sources">Other Sources</option>
                 </select>
-                <input
-                  type="text"
+                {renderErrors("annualIncome", `category_${index}`)}
+                <select
                   name="frequency"
-                  placeholder="Monthly/Annually"
                   value={income.frequency || ""}
                   onChange={(e) => handleInputChange(e, "annualIncome", index)}
                   style={styles.input}
-                />
+                >
+                  <option value="">Select Frequency</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Annually">Annually</option>
+                </select>
+                {renderErrors("annualIncome", `frequency_${index}`)}
                 <input
                   type="number"
                   name="amount"
@@ -114,6 +205,12 @@ const Dashboard = () => {
                   value={income.amount || ""}
                   onChange={(e) => handleInputChange(e, "annualIncome", index)}
                   style={styles.input}
+                />
+                {renderErrors("annualIncome", `amount_${index}`)}
+                <CurrencySelect
+                  name="passiveIncomeCurrency"
+                  value={formData.passiveIncomeCurrency || ""}
+                  onChange={(e) => handleInputChange(e, "income")}
                 />
                 <input
                   type="text"
@@ -148,6 +245,7 @@ const Dashboard = () => {
                   <option value="Fixed Assets">Fixed Assets</option>
                   <option value="Liquid Assets">Liquid Assets</option>
                 </select>
+                {renderErrors("assets", `category_${index}`)}
                 <input
                   type="text"
                   name="description"
@@ -164,10 +262,16 @@ const Dashboard = () => {
                   onChange={(e) => handleInputChange(e, "assets", index)}
                   style={styles.input}
                 />
+                 {renderErrors("assets", `amount_${index}`)}
+                <CurrencySelect
+                  name="currency"
+                  value={asset.currency || "PKR"}
+                  onChange={(e) => handleInputChange(e, "assets", index)}
+                />
                 <button onClick={() => removeItem("assets", index)}>Remove</button>
               </div>
             ))}
-            <button onClick={() => addItem("assets", { category: "", description: "", amount: "" })}>
+            <button onClick={() => addItem("assets", { category: "", description: "", amount: "",currency: "PKR" })}>
               Add Asset
             </button>
           </div>
@@ -175,54 +279,249 @@ const Dashboard = () => {
         
 
         case "Liabilities":
-            return (
-              <div>
-                <h4>Liabilities</h4>
-                {formData.liabilities.map((liability, index) => (
-                  <div key={index} style={styles.item}>
-                    <select
-                      name="category"
-                      value={liability.category || ""}
-                      onChange={(e) => handleInputChange(e, "liabilities", index)}
-                      style={styles.input}
-                    >
-                      <option value="">Select Category</option>
-                      <option value="Loans">Loans</option>
-                      <option value="Credit Card Debt">Credit Card Debt</option>
-                      <option value="Mortgages">Mortgages</option>
-                    </select>
-                    <input
-                      type="text"
-                      name="description"
-                      placeholder="Description"
-                      value={liability.description || ""}
-                      onChange={(e) => handleInputChange(e, "liabilities", index)}
-                      style={styles.input}
-                    />
-                    <input
-                      type="number"
-                      name="amount"
-                      placeholder="Amount"
-                      value={liability.amount || ""}
-                      onChange={(e) => handleInputChange(e, "liabilities", index)}
-                      style={styles.input}
-                    />
-                    <input
-                      type="number"
-                      name="interestRate"
-                      placeholder="Interest Rate"
-                      value={liability.interestRate || ""}
-                      onChange={(e) => handleInputChange(e, "liabilities", index)}
-                      style={styles.input}
-                    />
-                    <button onClick={() => removeItem("liabilities", index)}>Remove</button>
-                  </div>
-                ))}
-                <button onClick={() => addItem("liabilities", { category: "", description: "", amount: "", interestRate: "" })}>
-                  Add Liability
-                </button>
-              </div>
-            );
+          return (
+            <div>
+              <h4>Liabilities</h4>
+              {formData.liabilities.map((liability, index) => (
+                <div key={index} style={styles.item}>
+                  <select
+                    name="category"
+                    value={liability.category || ""}
+                    onChange={(e) => handleInputChange(e, "liabilities", index)}
+                    style={styles.input}
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Loan">Loan</option>
+                    <option value="Credit Card Debt">Credit Card Debt</option>
+                    <option value="Mortgage">Mortgage</option>
+                  </select>
+                  {renderErrors("liabilities", `category_${index}`)}
+
+                
+
+                  {/* Loan Information */}
+                  {liability.category === "Loan" && (
+                    <>
+                      <input
+                        type="number"
+                        name="loanAmount"
+                        placeholder="Loan Amount"
+                        value={liability.loanAmount || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `loanAmount_${index}`)}
+                      <input
+                        type="number"
+                        name="interestRate"
+                        placeholder="Interest Rate (%)"
+                        value={liability.interestRate || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `interestRate_${index}`)}
+                      <input
+                        type="text"
+                        name="loanTerm"
+                        placeholder="Loan Term (Months/Years)"
+                        value={liability.loanTerm || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `loanTerm_${index}`)}
+
+                      <input
+                        type="number"
+                        name="monthlyPayment"
+                        placeholder="Monthly Payment"
+                        value={liability.monthlyPayment || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `monthlyPayment_${index}`)}
+                      <input
+                        type="number"
+                        name="remainingBalance"
+                        placeholder="Remaining Balance"
+                        value={liability.remainingBalance || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `remainingBalance_${index}`)}
+                      <input
+                        type="date"
+                        name="startDate"
+                        placeholder="Enter Start Date (e.g., 2025-01-01)"
+                        value={liability.startDate || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `startDate_${index}`)}
+                      <input
+                        type="date"
+                        name="dueDate"
+                        placeholder="Enter Due Date (e.g., 2025-12-31)"
+                        value={liability.dueDate || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                       {renderErrors("liabilities", `dueDate_${index}`)}
+                    </>
+                  )}
+        
+                  {/* Credit Card Debt */}
+                  {liability.category === "Credit Card Debt" && (
+                    <>
+                      <input
+                        type="number"
+                        name="creditCardBalance"
+                        placeholder="Credit Card Balance"
+                        value={liability.creditCardBalance || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `creditCardBalance_${index}`)}
+
+                      <input
+                        type="number"
+                        name="creditCardAPR"
+                        placeholder="Interest Rate (APR %)"
+                        value={liability.creditCardAPR || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `creditCardAPR_${index}`)}
+                      <input
+                        type="number"
+                        name="minimumPayment"
+                        placeholder="Minimum Payment"
+                        value={liability.minimumPayment || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+
+                      {renderErrors("liabilities", `minimumPayment_${index}`)}
+
+                      <input
+                        type="number"
+                        name="monthlyPayment"
+                        placeholder="Monthly Payment"
+                        value={liability.monthlyPayment || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `monthlyPayment_${index}`)}
+                      <input
+                        type="number"
+                        name="creditLimit"
+                        placeholder="Credit Limit"
+                        value={liability.creditLimit || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `creditLimit_${index}`)}
+
+                      <input
+                        type="number"
+                        name="revolvingBalance"
+                        placeholder="Revolving Balance"
+                        value={liability.revolvingBalance || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `revolvingBalance_${index}`)}
+                    </>
+                  )}
+        
+                  {/* Mortgage */}
+                  {liability.category === "Mortgage" && (
+                    <>
+                      <input
+                        type="number"
+                        name="mortgageAmount"
+                        placeholder="Original Mortgage Amount"
+                        value={liability.mortgageAmount || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `mortgageAmount_${index}`)}
+                      <input
+                        type="number"
+                        name="mortgageInterestRate"
+                        placeholder="Interest Rate (%)"
+                        value={liability.mortgageInterestRate || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `mortgageInterestRate_${index}`)}
+
+
+                      <input
+                        type="text"
+                        name="mortgageTermLength"
+                        placeholder="Term Length (Years)"
+                        value={liability.mortgageTermLength || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `mortgageTermLength_${index}`)}
+
+                      <input
+                        type="number"
+                        name="mortgageMonthlyPayment"
+                        placeholder="Monthly Payment"
+                        value={liability.mortgageMonthlyPayment || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `mortgageMonthlyPayment_${index}`)}
+
+                      <input
+                        type="number"
+                        name="mortgageRemainingBalance"
+                        placeholder="Remaining Balance"
+                        value={liability.mortgageRemainingBalance || ""}
+                        onChange={(e) => handleInputChange(e, "liabilities", index)}
+                        style={styles.input}
+                      />
+                      {renderErrors("liabilities", `mortgageRemainingBalance_${index}`)}
+                    </>
+                  )}
+        
+                  <button onClick={() => removeItem("liabilities", index)}>Remove</button>
+                </div>
+              ))}
+              <button
+                onClick={() =>
+                  addItem("liabilities", {
+                    category: "",
+                    loanAmount: "",
+                    interestRate: "",
+                    loanTerm: "",
+                    monthlyPayment: "",
+                    remainingBalance: "",
+                    startDate: "",
+                    dueDate: "",
+                    creditCardBalance: "",
+                    creditCardAPR: "",
+                    minimumPayment: "",
+                    creditLimit: "",
+                    revolvingBalance: "",
+                    mortgageAmount: "",
+                    mortgageInterestRate: "",
+                    mortgageTermLength: "",
+                    mortgageMonthlyPayment: "",
+                    mortgageRemainingBalance: "",
+                    propertyTaxes: "",
+                    homeInsurance: "",
+                  })
+                }
+              >
+                Add Liability
+              </button>
+            </div>
+          );
+        
     
             case "Expenses":
                 return (
@@ -321,6 +620,11 @@ const styles = {
     padding: "8px",
     borderRadius: "4px",
     border: "1px solid #ccc",
+  },
+  error: { 
+    color: "red", 
+    fontSize: "12px", 
+    marginTop: "5px" 
   },
   item: {
     marginBottom: "10px",
