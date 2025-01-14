@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
 from .models import Liability, Asset, AnnualIncome, Expense, PersonalDetails
-
+from rest_framework.permissions import IsAuthenticated
 import logging
 logger = logging.getLogger(__name__)
 from django.core.validators import validate_email
@@ -100,11 +100,12 @@ class UserLogin(APIView):
 
 
 class SaveUserData(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
-        user = request.user  # Get the authenticated user
+        user = request.user  
         data = request.data
 
-        # Save Personal Details
+        
         personal_data = data.get("personalDetails", {})
         PersonalDetails.objects.create(
             user=user,
@@ -113,7 +114,7 @@ class SaveUserData(APIView):
             number_of_children=personal_data.get("numberOfChildren")
         )
 
-        # Save Annual Income
+        
         for income in data.get("annualIncome", []):
             AnnualIncome.objects.create(
                 user=user,
@@ -124,7 +125,7 @@ class SaveUserData(APIView):
                 currency=income.get("currency", "PKR")
             )
 
-        # Save Assets
+       
         for asset in data.get("assets", []):
             Asset.objects.create(
                 user=user,
@@ -134,7 +135,7 @@ class SaveUserData(APIView):
                 currency=asset.get("currency", "PKR")
             )
 
-        # Save Liabilities
+  
         for liability_data in data.get("liabilities", []):
             category = liability_data.get("category")
             if category == "Loan":

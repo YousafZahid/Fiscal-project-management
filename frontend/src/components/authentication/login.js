@@ -16,7 +16,6 @@ const Login = () => {
       localStorage.setItem("refresh_token", response.data.refresh);
       setMessage("Login successful!");
       navigate("/dashboard");
-      
     } catch (error) {
       setMessage("Invalid credentials. Please try again.");
     }

@@ -117,10 +117,14 @@ const handleSubmit = async () => {
  
   try {
     
-    const response = await axiosInstance.post("save-user-data/", formData);
-    setMessage("Data submitted successfully!");
-    console.log("Response from backend:", response.data);
-    setShowPopup(false); // Close the popup after successful submission
+    const token = localStorage.getItem("access_token"); // Get the token from local storage
+    const response = await axiosInstance.post("save-user-data/", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Include the token in the header
+      },
+    });
+    console.log("Data saved successfully:", response.data);
+    alert("Data saved successfully!");
   } catch (error) {
     console.error("Error submitting data:", error.response?.data || error.message);
     setMessage("Failed to submit data. Please try again.");
