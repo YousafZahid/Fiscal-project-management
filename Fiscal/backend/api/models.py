@@ -64,3 +64,16 @@ class Expense(models.Model):
     category = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
+    
+
+class Budget(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="budget")
+    expense_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    emergency_fund_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    debt_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    retirement_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    goal_budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+
+    def __str__(self):
+        return f"{self.user.username}'s Budget"
+

@@ -9,13 +9,13 @@ const Navbar = () => {
           <Link to="/dashboard" style={styles.navLink}>Dashboard</Link>
         </li>
         <li style={styles.navItem}>
-          <Link to="/emergency-funds" style={styles.navLink}>Emergency Savings</Link>
+          <Link to="/emergencysavings" style={styles.navLink}>Emergency Savings</Link>
         </li>
         <li style={styles.navItem}>
           <Link to="/Debts" style={styles.navLink}>Debts</Link>
         </li>
         <li style={styles.navItem}>
-          <Link to="/expence-tracking" style={styles.navLink}>Expense Tracking</Link>
+          <Link to="/expencetracking" style={styles.navLink}>Expense Tracking</Link>
         </li>
         <li style={styles.navItem}>
           <Link to="/Goals" style={styles.navLink}>Goals</Link>
@@ -35,7 +35,8 @@ const Navbar = () => {
 const styles = {
   navbar: {
     backgroundColor: "#007bff",
-    padding: "10px 20px",
+    padding: "25px 20px",
+    backgroundColor: "orange",
   },
   navList: {
     listStyle: "none",

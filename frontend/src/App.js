@@ -5,11 +5,14 @@ import Login from "./components/authentication/login";
 import Dashboard from "./components/dashboard/dashboard";
 import ProtectedRoute from "./components/common/protectedroute";
 import Home from "./pages/home";
+import EmergencySavings from "./components/dashboard/emergencysavings";
+import ExpenseTracking from "./components/dashboard/expensetracking";
+
 function App() {
   return (
     <Router>
       <div>
-        <h1>Welcome to My Django & React App</h1>
+     
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
@@ -22,6 +25,22 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+            path="/emergencysavings"
+            element={
+              <ProtectedRoute>
+                <EmergencySavings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/expencetracking"
+            element={
+              <ProtectedRoute>
+                <ExpenseTracking />
+              </ProtectedRoute>
+            }
+          />
          
         </Routes>
       </div>
