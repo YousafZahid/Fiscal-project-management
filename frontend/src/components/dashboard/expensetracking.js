@@ -7,21 +7,34 @@ const ExpenseTracking = () => {
   const [expenses, setExpenses] = useState([]);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [remainingBudget, setRemainingBudget] = useState(0);
-
   useEffect(() => {
-    fetchExpenses();
-    calculateRemainingBudget();
-  }, [budget, expenses]);
-
-  // Fetch expenses from the backend
+    fetchExpenses(); // Fetch data only once on component mount
+  }, []); 
+  
+  useEffect(() => {
+    calculateRemainingBudget(); // Update remaining budget when budget or totalExpenses change
+  }, [budget, totalExpenses]);
+  
   const fetchExpenses = async () => {
     try {
-      const response = await axiosInstance.get("expenses/"); // Adjust API endpoint
-      setExpenses(response.data);
-      const total = response.data.reduce((sum, expense) => sum + expense.amount, 0);
-      setTotalExpenses(total);
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        console.error("No access token found. Please login.");
+        return;
+      }
+      
+      const response = await axiosInstance.get("expenses/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      console.log("API Response:", response.data); // Debugging
+  
+      setExpenses(response.data.expenses || []); // Use response.data.expenses instead of response.data
+      setTotalExpenses(response.data.total_expenses || 0);
     } catch (error) {
-      console.error("Error fetching expenses:", error);
+      console.error("Error fetching expenses:", error.response);
     }
   };
 
@@ -45,15 +58,20 @@ const ExpenseTracking = () => {
     const category = prompt("Enter expense category:");
     const description = prompt("Enter expense description:");
     const amount = prompt("Enter expense amount:");
-
     if (category && description && amount && !isNaN(amount)) {
       try {
+        const token = localStorage.getItem("access_token");
         const response = await axiosInstance.post("add-expense/", {
           category,
           description,
-          amount: parseFloat(amount),
+          amount: parseFloat(amount)},
+          {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the header
+          },        
         });
         setExpenses([...expenses, response.data]);
+        
       } catch (error) {
         console.error("Error adding expense:", error);
       }
@@ -67,10 +85,24 @@ const ExpenseTracking = () => {
 
     if (updatedDescription && updatedAmount && !isNaN(updatedAmount)) {
       try {
-        await axiosInstance.put(`update-expense/${id}/`, {
-          description: updatedDescription,
-          amount: parseFloat(updatedAmount),
-        });
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          console.error("No access token found. Please login.");
+          return;
+        }
+        await axiosInstance.put(
+          `update-expense/${id}/`, 
+          {
+            description: updatedDescription,
+            amount: parseFloat(updatedAmount),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Include the token in the header
+            },
+          }
+        );
+
         fetchExpenses(); // Refresh expenses
       } catch (error) {
         console.error("Error updating expense:", error);
@@ -81,12 +113,27 @@ const ExpenseTracking = () => {
   // Delete an expense
   const deleteExpense = async (id) => {
     try {
-      await axiosInstance.delete(`delete-expense/${id}/`);
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        console.error("No access token found. Please login.");
+        return;
+      }
+
+      await axiosInstance.delete(
+        `delete-expense/${id}/`, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the header
+          },
+        }
+      );
+      
       setExpenses(expenses.filter((expense) => expense.id !== id));
     } catch (error) {
       console.error("Error deleting expense:", error);
     }
-  };
+};
+
 
   return (
     <div>

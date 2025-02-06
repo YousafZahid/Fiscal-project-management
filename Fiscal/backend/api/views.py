@@ -1,18 +1,19 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from django.core.mail import send_mail
-from django.conf import settings
-from django.urls import reverse
-from .models import Liability, Asset, AnnualIncome, Expense, PersonalDetails
-from rest_framework.permissions import IsAuthenticated
 import logging
-logger = logging.getLogger(__name__)
+from django.urls import reverse
+from django.conf import settings
+from rest_framework import status
+from django.core.mail import send_mail
+from rest_framework.views import APIView
+from .serializers import BudgetSerializer, ExpenseSerializer
+from django.contrib.auth.models import User
+from rest_framework.response import Response
+from django.contrib.auth import authenticate
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from .models import Liability, Asset, AnnualIncome, Expense, PersonalDetails, Budget
+logger = logging.getLogger(__name__)
 # Signup View
 class Signup(APIView):
     def post(self, request):
@@ -188,12 +189,74 @@ class SaveUserData(APIView):
 
         return Response({"message": "Data saved successfully."}, status=status.HTTP_201_CREATED)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Budget
-from .serializers import BudgetSerializer
-from rest_framework.permissions import IsAuthenticated
+
+
+
+#Expense tracking views
+    
+class ExpenseListView(APIView):
+    print("list view called")
+    permission_classes = [IsAuthenticated]
+    #print(permission_classes)
+    def get(self, request):
+        print("getter called")
+        print(f"User: {request.user}")  # Debugging: See if user is authenticated
+        print(f"Is authenticated: {request.user.is_authenticated}")
+        if not request.user.is_authenticated:
+            return Response({"error": "Unauthorized"}, status=401)
+
+        user = request.user
+        expenses = Expense.objects.filter(user=user)
+        serializer = ExpenseSerializer(expenses, many=True)
+        total_expenses = sum(exp.amount for exp in expenses)
+        return Response({"expenses": serializer.data, "total_expenses": total_expenses}, status=status.HTTP_200_OK)
+
+class AddExpenseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            data = request.data.copy()  # Create a mutable copy
+            data["user"] = request.user.id  # Assign the authenticated user
+
+            serializer = ExpenseSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class UpdateExpenseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, expense_id):
+        try:
+            expense = Expense.objects.get(id=expense_id, user=request.user)
+        except Expense.DoesNotExist:
+            return Response({"error": "Expense not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ExpenseSerializer(expense, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteExpenseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, expense_id):
+        try:
+            expense = Expense.objects.get(id=expense_id, user=request.user)
+        except Expense.DoesNotExist:
+            return Response({"error": "Expense not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        expense.delete()
+        return Response({"message": "Expense deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class BudgetView(APIView):
     permission_classes = [IsAuthenticated]
