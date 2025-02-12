@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+
 class PersonalDetails(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="personal_details")
     age = models.PositiveIntegerField()
