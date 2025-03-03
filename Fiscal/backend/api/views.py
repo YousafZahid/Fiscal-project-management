@@ -271,10 +271,11 @@ class BudgetView(APIView):
 
     def post(self, request):
         serializer = BudgetSerializer(data=request.data)
-        if serializer.is_valid():
-            Budget.objects.create(user=request.user, **serializer.validated_data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if serializer.is_valid():
+        #     Budget.objects.create(user=request.user, **serializer.validated_data)
+        #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
         try:

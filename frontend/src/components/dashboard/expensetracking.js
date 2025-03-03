@@ -8,6 +8,7 @@ const ExpenseTracking = () => {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [remainingBudget, setRemainingBudget] = useState(0);
   useEffect(() => {
+    fetchBudget();
     fetchExpenses(); // Fetch data only once on component mount
   }, []); 
   
@@ -38,14 +39,53 @@ const ExpenseTracking = () => {
     }
   };
 
-  // Handle adding/updating the budget
-  const handleBudgetChange = () => {
-    const newBudget = prompt("Enter your expense budget:");
-    if (newBudget && !isNaN(newBudget)) {
-      setBudget(parseFloat(newBudget));
+  const fetchBudget = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token){
+        console.error("No access token found. Please Login. ");
+        return;
+      }
+      const response = await axiosInstance.get("budget/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setBudget(response.data.expense_budget);
+    } catch (error) {
+      console.error("Error fetching budget:", error.response);
     }
   };
-
+  
+  // Handle adding/updating the budget
+  const handleBudgetChange = async () => {
+    const newBudget = prompt("Enter your expense budget:");
+    if (newBudget && !isNaN(newBudget)) {
+      const budgetValue = parseFloat(newBudget);
+      setBudget(budgetValue);
+  
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          console.error("No access token found. Please login.");
+          return;
+        }
+  
+        await axiosInstance.post(
+          "budget/",
+          { expense_budget: budgetValue },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error saving budget:", error);
+      }
+    }
+  };
+  
   // Calculate remaining budget
   const calculateRemainingBudget = () => {
     if (budget !== null) {
@@ -139,19 +179,20 @@ const ExpenseTracking = () => {
     <div>
       <Navbar />
       <div style={styles.container}>
-        <h2>Expense Tracking</h2>
+        
         <div style={styles.budgetContainer}>
           {/* Budget Box */}
-          <div style={styles.box} onClick={handleBudgetChange}>
-            {budget === null ? (
-              <p style={styles.addText}>Add Budget</p>
-            ) : (
-              <>
-                <p style={styles.valueText}>{`Budget: PKR ${budget.toFixed(2)}`}</p>
-                <p style={styles.updateText}>Update</p>
-              </>
-            )}
-          </div>
+        <div style={styles.box} onClick={handleBudgetChange}>
+          {budget === null || isNaN(budget) ? (
+            <p style={styles.addText}>Add Budget</p>
+          ) : (
+            <>
+              <p style={styles.valueText}>{`Budget: PKR ${Number(budget).toFixed(2)}`}</p>
+              <p style={styles.updateText}>Update</p>
+            </>
+          )}
+        </div>
+
 
           {/* Total Expenses Box */}
           <div style={styles.box}>
@@ -201,7 +242,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     gap: "20px",
-    marginTop: "20px",
+    marginTop: "80px",
   },
   box: {
     width: "200px",
@@ -213,6 +254,7 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     cursor: "pointer",
+    backgroundColor: "#008080",
   },
   addText: {
     fontSize: "20px",
@@ -258,3 +300,7 @@ const styles = {
 };
 
 export default ExpenseTracking;
+
+
+// save budget value in database
+// check for any errors
