@@ -1,4 +1,4 @@
-from .models import Budget, Expense
+from .models import Budget, Expense, EmergencyFund
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -34,3 +34,15 @@ class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
         fields = ['id', 'user', 'category', 'description', 'amount']
+
+
+
+class EmergencyFundSerializer(serializers.ModelSerializer):
+    progress = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmergencyFund
+        fields = ["goal_amount", "monthly_budget", "saved_amount", "date_saved", "progress"]
+
+    def get_progress(self, obj):
+        return obj.progress_percentage()

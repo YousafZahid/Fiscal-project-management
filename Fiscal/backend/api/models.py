@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.timezone import now
 
 
 class PersonalDetails(models.Model):
@@ -78,3 +79,19 @@ class Budget(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Budget"
 
+
+class EmergencyFund(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="emergency_funds")
+    goal_amount = models.DecimalField(max_digits=10, decimal_places=2)  # User sets this
+    monthly_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Monthly savings
+    saved_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Total saved so far
+    date_saved = models.DateField(default=now)  # When the money was saved
+
+    def progress_percentage(self):
+        """Calculate progress percentage towards goal"""
+        if self.goal_amount > 0:
+            return (self.saved_amount / self.goal_amount) * 100
+        return 0
+
+    def __str__(self):
+        return f"{self.user.username} - Goal: {self.goal_amount}, Saved: {self.saved_amount}"

@@ -4,7 +4,7 @@ from django.conf import settings
 from rest_framework import status
 from django.core.mail import send_mail
 from rest_framework.views import APIView
-from .serializers import BudgetSerializer, ExpenseSerializer
+from .serializers import BudgetSerializer, ExpenseSerializer, EmergencyFundSerializer
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
@@ -12,11 +12,15 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from .models import Liability, Asset, AnnualIncome, Expense, PersonalDetails, Budget
+from .models import Liability, Asset, AnnualIncome, Expense, PersonalDetails, Budget, EmergencyFund
+from django.utils.timezone import now
+
 logger = logging.getLogger(__name__)
 # Signup View
-class Signup(APIView):
+class Signup(APIView):      
+    
     def post(self, request):
+        
         username = request.data.get("username")
         email = request.data.get("email")
         password = request.data.get("password")
@@ -271,19 +275,84 @@ class BudgetView(APIView):
 
     def post(self, request):
         serializer = BudgetSerializer(data=request.data)
-        
-        # if serializer.is_valid():
-        #     Budget.objects.create(user=request.user, **serializer.validated_data)
-        #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid():
+            Budget.objects.create(user=request.user, **serializer.validated_data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
         try:
+            print("Fetching budget for user:", request.user)
             budget = Budget.objects.get(user=request.user)
+            print("Budget found:", budget)
+
             serializer = BudgetSerializer(budget, data=request.data, partial=True)
             if serializer.is_valid():
+                print("Serializer is valid. Saving...")
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
+
+            print("Serializer errors:", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+      
         except Budget.DoesNotExist:
+            print("No budget found for user.")
             return Response({"error": "No budget found for the user."}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            print("Unexpected error:", str(e))
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class EmergencyFundView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            emergency_fund = EmergencyFund.objects.get(user=request.user)
+            serializer = EmergencyFundSerializer(emergency_fund)
+            return Response(serializer.data, status=200)
+        except EmergencyFund.DoesNotExist:
+            return Response({"message": "No emergency fund data found."}, status=404)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    def post(self, request):
+        try:
+            data = request.data
+            data["user"] = request.user.id  # Ensure user is linked to the fund
+            serializer = EmergencyFundSerializer(data=data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    def put(self, request):
+        try:
+            emergency_fund = EmergencyFund.objects.get(user=request.user)
+            serializer = EmergencyFundSerializer(emergency_fund, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=200)
+            return Response(serializer.errors, status=400)
+        except EmergencyFund.DoesNotExist:
+            return Response({"message": "No emergency fund found. Please create one first."}, status=404)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+        
+
+class IncomeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user_income = AnnualIncome.objects.filter(user=request.user)
+            total_income = sum(income.amount for income in user_income)
+            return Response({"total_income": total_income}, status=200)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

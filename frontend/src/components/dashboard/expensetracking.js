@@ -58,33 +58,63 @@ const ExpenseTracking = () => {
   };
   
   // Handle adding/updating the budget
-  const handleBudgetChange = async () => {
-    const newBudget = prompt("Enter your expense budget:");
-    if (newBudget && !isNaN(newBudget)) {
-      const budgetValue = parseFloat(newBudget);
-      setBudget(budgetValue);
-  
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-          console.error("No access token found. Please login.");
-          return;
-        }
-  
-        await axiosInstance.post(
+
+const handleBudgetChange = async () => {
+  const newBudget = prompt("Enter your expense budget:");
+  if (newBudget && !isNaN(newBudget)) {
+    const budgetValue = parseFloat(newBudget);
+    setBudget(budgetValue);
+    const token = localStorage.getItem("access_token");
+      if (!token) {
+        console.error("No access token found. Please login.");
+        return;
+      }
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        console.error("No access token found. Please login.");
+        return;
+      }
+
+      // First, check if a budget already exists
+      const response = await axiosInstance.get("budget/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 200) {
+        // If a budget exists, use PUT to update it
+        await axiosInstance.put(
           "budget/",
           { expense_budget: budgetValue },
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
-      } catch (error) {
-        console.error("Error saving budget:", error);
+        console.log("Budget updated successfully!");
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // If budget does not exist, use POST to create a new one
+        try {
+          await axiosInstance.post(
+            "budget/",
+            { expense_budget: budgetValue },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          console.log("Budget created successfully!");
+        } catch (postError) {
+          console.error("Error creating budget:", postError);
+        }
+      } else {
+        console.error("Error checking budget:", error);
       }
     }
-  };
+  }
+};
+
+
   
   // Calculate remaining budget
   const calculateRemainingBudget = () => {
@@ -254,7 +284,7 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     cursor: "pointer",
-    backgroundColor: "#008080",
+    backgroundColor: "#white",
   },
   addText: {
     fontSize: "20px",
@@ -266,9 +296,10 @@ const styles = {
     fontWeight: "bold",
   },
   updateText: {
-    fontSize: "12px",
-    color: "#007BFF",
+    fontSize: "20px",
+    color: "black",
     marginTop: "5px",
+    fontWeight: "bold",
   },
   expenseList: {
     marginTop: "30px",
