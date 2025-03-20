@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.timezone import now
 
 
 class PersonalDetails(models.Model):
@@ -65,6 +66,7 @@ class Expense(models.Model):
     category = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
+    date_saved = models.DateField(default=now)
     
 
 class Budget(models.Model):
@@ -78,3 +80,27 @@ class Budget(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Budget"
 
+
+class EmergencyFund(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="emergency_fund")
+    goal_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Goal Amount")  # User sets this
+    saved_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Total saved so far
+
+    def progress_percentage(self):
+        """Calculate progress percentage towards goal"""
+        if self.goal_amount > 0:
+            return (self.saved_amount / self.goal_amount) * 100
+        return 0
+
+    def __str__(self):
+        return f"{self.user.username} - Goal: {self.goal_amount}, Saved: {self.saved_amount}"
+
+
+class EmergencyFundTransaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="emergency_fund_transactions")
+    emergency_fund = models.ForeignKey(EmergencyFund, on_delete=models.CASCADE, related_name="transactions")
+    amount_saved = models.DecimalField(max_digits=10, decimal_places=2)  # Amount added
+    date_saved = models.DateField(default=now)  # When the money was saved
+
+    def __str__(self):
+        return f"{self.user.username} - {self.amount_saved} on {self.date_saved}"

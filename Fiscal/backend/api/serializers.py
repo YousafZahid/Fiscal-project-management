@@ -1,4 +1,4 @@
-from .models import Budget, Expense
+from .models import Budget, Expense, EmergencyFund, EmergencyFundTransaction
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -33,4 +33,17 @@ class BudgetSerializer(serializers.ModelSerializer):
 class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
-        fields = ['id', 'user', 'category', 'description', 'amount']
+        fields = ['id', 'user', 'category', 'description', 'amount', 'date_saved']
+
+
+
+class EmergencyFundSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmergencyFund
+        fields = ['user', 'goal_amount', 'saved_amount']
+        read_only_fields = ['user']
+
+class EmergencyFundTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmergencyFundTransaction
+        fields = ['amount_saved', 'date_saved', 'emergency_fund']

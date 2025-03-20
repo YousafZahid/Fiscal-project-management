@@ -42,7 +42,7 @@ const styles = {
   navbar: {
     padding: "20px",
     margin: "20px",
-    backgroundColor: "orange",
+    backgroundColor: "#FF9040",
     borderRadius: "15px",
     boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.2)",
   },
@@ -67,7 +67,7 @@ const styles = {
   },
   activeLink: {
     transition: "1s",
-    backgroundColor: "#FD6418",
+    backgroundColor: "",
     fontWeight: "bold",
     color: "black",
   },

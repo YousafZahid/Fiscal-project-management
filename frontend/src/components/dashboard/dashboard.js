@@ -15,7 +15,7 @@ const Dashboard = () => {
   });
   const [errors, setErrors] = useState({});
   const sections = ["Personal Details", "Annual Income", "Assets", "Liabilities", "Expenses"];
-  const [message, setMessage] = useState("");
+  // const [message, setMessage] = useState("");
 
 
   const validateField = (section, key, value) => {
@@ -31,7 +31,7 @@ const Dashboard = () => {
         break;
 
       case "annualIncome":
-        if (key === "category" && (!value || value != "Select Category")) errorMessage = "Category is required.";
+        if (key === "category" && (!value || value !== "Select Category")) errorMessage = "Category is required.";
         if (key === "frequency" && !value) errorMessage = "Frequency is required.";
         if (key === "amount" &&  value <= 0)
           errorMessage = "Amount must be a positive value.";
@@ -127,7 +127,7 @@ const handleSubmit = async () => {
     alert("Data saved successfully!");
   } catch (error) {
     console.error("Error submitting data:", error.response?.data || error.message);
-    setMessage("Failed to submit data. Please try again.");
+    // setMessage("Failed to submit data. Please try again.");
   }
 };
 
