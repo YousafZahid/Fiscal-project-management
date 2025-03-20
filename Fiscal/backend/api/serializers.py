@@ -40,9 +40,10 @@ class ExpenseSerializer(serializers.ModelSerializer):
 class EmergencyFundSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmergencyFund
-        fields = ['goal_amount', 'saved_amount']
+        fields = ['user', 'goal_amount', 'saved_amount']
+        read_only_fields = ['user']
 
 class EmergencyFundTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmergencyFundTransaction
-        fields = ['amount_saved', 'date_saved']
+        fields = ['amount_saved', 'date_saved', 'emergency_fund']

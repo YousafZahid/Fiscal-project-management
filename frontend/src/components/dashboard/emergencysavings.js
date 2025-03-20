@@ -14,7 +14,7 @@ const EmergencySavings = () => {
   const [history, setHistory] = useState([]);
   const [income, setIncome] = useState(0);
   const [expenseBudget, setExpenseBudget] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  //const [isModalOpen, setIsModalOpen] = useState(false);
   // Modal State
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState(3);
@@ -23,8 +23,8 @@ const EmergencySavings = () => {
 
   useEffect(() => {
     fetchEmergencyFund();
-    fetchIncome();
-    fetchExpenseBudget();
+    //fetchIncome();
+    fetchBudget();
     fetchEmergencyFundTransactions();
   }, []);
 
@@ -52,42 +52,8 @@ const EmergencySavings = () => {
     }
   };
 
-  const fetchEmergencyFundTransactions = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        console.error("No access token found.");
-        return;
-      }
-      const response = await axiosInstance.get("emergencyfund/transactions", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setHistory(response.data); // Transactions contain amount_saved and date_saved
-    } catch (error) {
-      console.error("Error fetching emergency fund transactions:", error);
-    }
-  };
-
-  // Fetch User's Income
-  const fetchIncome = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-      if (!token) return;
-
-      const response = await axiosInstance.get("income/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setIncome(response.data.total_income);
-
-    } catch (error) {
-      console.error("Error fetching income:", error);
-    }
-  };
-
-  // Fetch User's Expense Budget
-  const fetchExpenseBudget = async () => {
+  // Fetch User's Budget
+  const fetchBudget = async () => {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) return;
@@ -102,6 +68,43 @@ const EmergencySavings = () => {
       console.error("Error fetching expense budget:", error);
     }
   };
+  
+  // User's transaction history
+  const fetchEmergencyFundTransactions = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        console.error("No access token found.");
+        return;
+      }
+      const response = await axiosInstance.get("emergency-fund-transactions", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setHistory(response.data); // Transactions contain amount_saved and date_saved
+    } catch (error) {
+      console.error("Error fetching emergency fund transactions:", error);
+    }
+  };
+
+  // Fetch User's Income
+  // const fetchIncome = async () => {
+  //   try {
+  //     const token = localStorage.getItem("access_token");
+  //     if (!token) return;
+
+  //     const response = await axiosInstance.get("income/", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+
+  //     setIncome(response.data.total_income);
+
+  //   } catch (error) {
+  //     console.error("Error fetching income:", error);
+  //   }
+  // };
+
+  
 
   // Show Goal Setting Modal
   const handleOpenGoalModal = () => {
@@ -124,50 +127,85 @@ const EmergencySavings = () => {
 
   // Handle Goal Update
   const handleSetGoal = async () => {
-    const finalGoal = customGoal || expenseBudget * selectedMonths;
-    const finalBudget = customBudget || (finalGoal / selectedMonths).toFixed(2);
 
-    if (!finalGoal || !finalBudget || isNaN(finalGoal) || isNaN(finalBudget)) return;
+  const finalGoal = customGoal ? parseFloat(customGoal) : expenseBudget * selectedMonths;
+  const finalBudget = customBudget ? parseFloat(customBudget) : (finalGoal / selectedMonths).toFixed(2);
 
-    try {
-      const token = localStorage.getItem("access_token");
+  if (!finalGoal || !finalBudget || isNaN(finalGoal) || isNaN(finalBudget)) {
+    alert("Invalid input. Please enter valid numbers.");
+    return;
+  }
 
-      await axiosInstance.post(
-        "emergencyfund/",
-        { goal_amount: finalGoal, monthly_budget: finalBudget,date_saved: new Date().toISOString().split("T")[0], },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-        
-      alert("Goal set successfully!");
-      fetchEmergencyFund();
-      handleCloseModal();
-    } catch (error) {
-      console.error("Error setting goal:", error);
-      alert(error.response?.data?.error || "An error occurred");
-    }
-  };
+  try {
+    const token = localStorage.getItem("access_token");
+
+    const fundResponse = await axiosInstance.post("emergencyfund/", { goal_amount: finalGoal, saved_amount: 0 }, { headers: { Authorization: `Bearer ${token}` } });
+    console.log("Emergency Fund Response:", fundResponse.data);
+
+    const budgetResponse = await axiosInstance.post("budget/", { emergency_fund_budget: finalBudget }, { headers: { Authorization: `Bearer ${token}` } });
+    console.log("Budget Response:", budgetResponse.data);
+
+    alert("Goal set successfully!");
+    fetchEmergencyFund();
+    fetchBudget();  // Ensure budget is also updated
+    handleCloseModal();
+  } catch (error) {
+    console.error("Error setting goal:", error);
+    alert(error.response?.data?.error || "An error occurred");
+  }
+};
 
   // Handle Saving Money
-  const handleSaveMoney = async () => {
-    const saved = prompt("Enter amount saved this month:");
+ const handleSaveMoney = async () => {
+  const saveOption = window.confirm(
+    `Do you want to save the monthly budget amount (PKR ${monthlyBudget})? Click 'OK' for monthly budget or 'Cancel' to enter a custom amount.`
+  );
 
-    if (!saved || isNaN(saved)) return;
-
-    try {
-      const token = localStorage.getItem("access_token");
-
-      await axiosInstance.put(
-        "emergency-fund/",
-        { saved_amount: saved },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert("Savings updated!");
-      fetchEmergencyFund();
-    } catch (error) {
-      console.error("Error saving money:", error);
+  let savedAmount;
+  if (saveOption) {
+    savedAmount = monthlyBudget;
+  } else {
+    const customAmount = prompt("Enter the amount you want to save:");
+    if (!customAmount || isNaN(customAmount) || parseFloat(customAmount) <= 0) {
+      alert("Invalid amount. Please enter a valid number.");
+      return;
     }
-  };
+    savedAmount = parseFloat(customAmount);
+  }
+
+  try {
+    const token = localStorage.getItem("access_token");
+
+    // Fetch the emergency fund ID dynamically
+    const emergencyFundResponse = await axiosInstance.get("emergency-funds/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!emergencyFundResponse.data.length) {
+      alert("No emergency fund found for this user.");
+      return;
+    }
+
+    const emergencyFundId = emergencyFundResponse.data[0].id; // Assuming user has at least one emergency fund
+
+    // Send the transaction request
+    await axiosInstance.post(
+      "emergency-fund-transactions/",
+      {
+        amount_saved: savedAmount,
+        emergency_fund: emergencyFundId, // ✅ Use the dynamically fetched ID
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    alert("Savings updated!");
+    fetchEmergencyFund();
+  } catch (error) {
+    console.error("Error saving money:", error);
+    alert(error.response?.data?.error || "An error occurred while saving.");
+  }
+};
+
 
   return (
     <div>
