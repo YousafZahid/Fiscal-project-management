@@ -227,7 +227,7 @@ const handleSubmit = async () => {
                 <button onClick={() => removeItem("annualIncome", index)}>Remove</button>
               </div>
             ))}
-            <button onClick={() => addItem("annualIncome", { category: "", frequency: "", amount: "", description: "" })}>
+            <button onClick={() => addItem("annualIncome", { category: "", frequency: "", amount: "", description: "" })} className="bg-orange-100 text-orange-700 px-5 py-2 rounded-md hover:bg-orange-200 transition block mx-auto">
               Add Income
             </button>
           </div>
@@ -275,7 +275,7 @@ const handleSubmit = async () => {
                 <button onClick={() => removeItem("assets", index)}>Remove</button>
               </div>
             ))}
-            <button onClick={() => addItem("assets", { category: "", description: "", amount: "",currency: "PKR" })}>
+            <button onClick={() => addItem("assets", { category: "", description: "", amount: "",currency: "PKR" })} className="bg-orange-100 text-orange-700 px-5 py-2 rounded-md hover:bg-orange-200 transition block mx-auto">
               Add Asset
             </button>
           </div>
@@ -492,7 +492,7 @@ const handleSubmit = async () => {
                     </>
                   )}
         
-                  <button onClick={() => removeItem("liabilities", index)}>Remove</button>
+                  <button onClick={() => removeItem("liabilities", index)} className="bg-orange-100 text-orange-700 px-5 py-2 rounded-md hover:bg-orange-200 transition block mx-auto">Remove</button>
                 </div>
               ))}
               <button
@@ -519,7 +519,7 @@ const handleSubmit = async () => {
                     propertyTaxes: "",
                     homeInsurance: "",
                   })
-                }
+                } className="bg-orange-100 text-orange-700 px-5 py-2 rounded-md hover:bg-orange-200 transition block mx-auto"
               >
                 Add Liability
               </button>
@@ -562,7 +562,7 @@ const handleSubmit = async () => {
                         <button onClick={() => removeItem("expenses", index)}>Remove</button>
                       </div>
                     ))}
-                    <button onClick={() => addItem("expenses", { category: "", description: "", amount: "" })}>
+                    <button onClick={() => addItem("expenses", { category: "", description: "", amount: "" })} className="bg-orange-100 text-orange-700 px-5 py-2 rounded-md hover:bg-orange-200 transition block mx-auto">
                       Add Expense
                     </button>
                   </div>
@@ -576,30 +576,52 @@ const handleSubmit = async () => {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="bg-orange-50 min-h-screen flex flex-col">
       <Navbar />
-      <h1>Dashboard</h1>
+      <h1 className="text-3xl font-bold text-center self-center text-gray-800 mb-6">Dashboard</h1>
       {!showPopup ? (
-        <div>
-          <h2>Start Your Journey</h2>
-          <button onClick={() => setShowPopup(true)}>Start</button>
-        </div>
-      ) : (
-        <div style={styles.popup}>
-          <h2>{sections[currentSection]}</h2>
-          {renderSection()}
-          <div style={styles.navigation}>
-            <button onClick={handleBack} disabled={currentSection === 0}>
-              Back
-            </button>
-            {currentSection < sections.length - 1 ? (
-              <button onClick={handleNext}>Next</button>
-            ) : (
-              <button onClick={handleSubmit}>Submit</button>
-            )}
-          </div>
-        </div>
-      )}
+    <div className="text-center">
+      <h2 className="text-2xl font-semibold text-gray-700">Start Your Journey</h2>
+      <button 
+        onClick={() => setShowPopup(true)} 
+        className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
+      >
+        Start
+      </button>
+    </div>
+  ) : (
+    <div className="bg-white p-6 rounded-lg shadow-md max-w-lg w-full mx-auto">
+      <h2 className="text-xl font-semibold text-gray-700">{sections[currentSection]}</h2>
+
+      {renderSection()}
+
+      <div className="mt-6 flex justify-between">
+        <button 
+          onClick={handleBack} 
+          disabled={currentSection === 0}
+          className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition disabled:opacity-50"
+        >
+          Back
+        </button>
+
+        {currentSection < sections.length - 1 ? (
+          <button 
+            onClick={handleNext} 
+            className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
+          >
+            Next
+          </button>
+        ) : (
+          <button 
+            onClick={handleSubmit} 
+            className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
+          >
+            Submit
+          </button>
+        )}
+      </div>
+    </div>
+  )}
     </div>
   );
 };
@@ -632,7 +654,7 @@ const styles = {
   },
   item: {
     marginBottom: "10px",
-  },
+   },
   navigation: {
     marginTop: "20px",
   },

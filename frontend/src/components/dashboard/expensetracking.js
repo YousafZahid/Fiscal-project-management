@@ -176,59 +176,85 @@ const ExpenseTracking = () => {
 
 
   return (
-    <div>
+    <div className="flex flex-col items-center" >
       <Navbar />
-      <div style={styles.container}>
-        
-        <div style={styles.budgetContainer}>
+     
+      
+      <div className="w-full max-w-4xl text-center mt-10">
+        {/* Budget Boxes */}
+        <div className="flex justify-center gap-6 mt-10">
           {/* Budget Box */}
-        <div style={styles.box} onClick={handleBudgetChange}>
-          {budget === null || isNaN(budget) ? (
-            <p style={styles.addText}>Add Budget</p>
-          ) : (
-            <>
-              <p style={styles.valueText}>{`Budget: PKR ${Number(budget).toFixed(2)}`}</p>
-              <p style={styles.updateText}>Update</p>
-            </>
-          )}
-        </div>
-
+          <div 
+            className="w-48 h-24 bg-orange-100 text-gray-800 rounded-lg flex flex-col justify-center items-center shadow-md cursor-pointer hover:bg-orange-200 transition"
+            onClick={handleBudgetChange}
+          >
+            {budget === null || isNaN(budget) ? (
+              <p className="text-lg font-semibold text-gray-500">Add Budget</p>
+            ) : (
+              <>
+                <p className="text-lg font-bold">{`Budget: PKR ${Number(budget).toFixed(2)}`}</p>
+                <p className="text-sm text-blue-500 mt-1">Update</p>
+              </>
+            )}
+          </div>
 
           {/* Total Expenses Box */}
-          <div style={styles.box}>
-            <p style={styles.valueText}>{`Total Expenses: PKR ${totalExpenses.toFixed(2)}`}</p>
+          <div className="w-48 h-24 bg-orange-100 text-gray-800 rounded-lg flex flex-col justify-center items-center shadow-md">
+            <p className="text-lg font-bold">{`Total Expenses: PKR ${totalExpenses.toFixed(2)}`}</p>
           </div>
 
           {/* Remaining Budget Box */}
-          <div style={styles.box}>
-            <p style={styles.valueText}>{`Remaining Budget: PKR ${remainingBudget.toFixed(2)}`}</p>
+          <div className="w-48 h-24 bg-orange-100 text-gray-800 rounded-lg flex flex-col justify-center items-center shadow-md">
+            <p className="text-lg font-bold">{`Remaining Budget: PKR ${remainingBudget.toFixed(2)}`}</p>
           </div>
         </div>
 
         {/* Expense List */}
-        <div style={styles.expenseList}>
-          <h3>Expenses</h3>
-          <button style={styles.addExpenseButton} onClick={addExpense}>
+        <div className="mt-10">
+          <h3 className="text-2xl font-semibold text-gray-700 mb-4">Expenses</h3>
+
+          {/* Add Expense Button */}
+          <button 
+            onClick={addExpense}
+            className="bg-orange-100 text-orange-700 px-5 py-2 rounded-md hover:bg-orange-200 transition block mx-auto"
+          >
             Add Expense
           </button>
-          {expenses.map((expense) => (
-            <div key={expense.id} style={styles.expenseItem}>
-              <div>
-                <strong>{expense.category}</strong> - {expense.description}
-                <p>{`Amount: PKR ${expense.amount}`}</p>
+
+          <div className="mt-6 space-y-4">
+            {expenses.map((expense) => (
+              <div 
+                key={expense.id} 
+                className="flex justify-between items-center p-4 border border-orange-200 bg-white shadow-sm rounded-lg"
+              >
+                <div>
+                  <strong className="text-orange-700">{expense.category}</strong> - {expense.description}
+                  <p className="text-gray-600">{`Amount: PKR ${expense.amount}`}</p>
+                </div>
+                <div>
+                  {/* Update Button (Secondary) */}
+                  <button 
+                    onClick={() => updateExpense(expense.id)}
+                    className="bg-white text-orange-700 border border-orange-700 px-4 py-2 rounded-md hover:bg-orange-200 transition mr-2"
+                  >
+                    Update
+                  </button>
+
+                  {/* Delete Button (Primary) */}
+                  <button 
+                    onClick={() => deleteExpense(expense.id)}
+                    className="bg-orange-100 text-orange-700 px-4 py-2 rounded-md hover:bg-orange-200 transition"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <div>
-                <button style={styles.actionButton} onClick={() => updateExpense(expense.id)}>
-                  Update
-                </button>
-                <button style={styles.actionButton} onClick={() => deleteExpense(expense.id)}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
       </div>
+    
     </div>
   );
 };
