@@ -203,12 +203,6 @@ class ExpenseListView(APIView):
     permission_classes = [IsAuthenticated]
     #print(permission_classes)
     def get(self, request):
-        print("getter called")
-        print(f"User: {request.user}")  # Debugging: See if user is authenticated
-        print(f"Is authenticated: {request.user.is_authenticated}")
-        if not request.user.is_authenticated:
-            return Response({"error": "Unauthorized"}, status=401)
-
         user = request.user
         expenses = Expense.objects.filter(user=user)
         serializer = ExpenseSerializer(expenses, many=True)
@@ -222,7 +216,8 @@ class AddExpenseView(APIView):
         try:
             data = request.data.copy()  # Create a mutable copy
             data["user"] = request.user.id  # Assign the authenticated user
-
+            if "date_saved" not in data:
+                data["date_saved"] = now().date()
             serializer = ExpenseSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
@@ -302,7 +297,8 @@ class BudgetView(APIView):
 
         except Exception as e:
             print("Unexpected error:", str(e))
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
+
 
 
 class EmergencyFundView(APIView):
@@ -310,26 +306,47 @@ class EmergencyFundView(APIView):
 
     def get(self, request):
         try:
-            emergency_fund = EmergencyFund.objects.get(user=request.user)
-            serializer = EmergencyFundSerializer(emergency_fund)
-            return Response(serializer.data, status=200)
+            
+            print("func_called")
+            emergency_fund = EmergencyFund.objects.filter(user=request.user)
+            
+            # Fix: Add `many=True` to handle QuerySet correctly
+            serializer = EmergencyFundSerializer(emergency_fund, many=True)
+            
+            # Debugging print statements
+            if not serializer.data:
+                print("no data")
+            
+            print(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
         except EmergencyFund.DoesNotExist:
-            return Response({"message": "No emergency fund data found."}, status=404)
+            return Response({"message": "No emergency fund data found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+   
     def post(self, request):
         try:
-            data = request.data
-            data["user"] = request.user.id  # Ensure user is linked to the fund
+            data = request.data.copy()
+            data["user"] = request.user.id  # Ensure user is linked
+            
+            # Debug: Print incoming request data
+            print("Received Data:", data)
+
             serializer = EmergencyFundSerializer(data=data)
 
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=201)
-            return Response(serializer.errors, status=400)
+                serializer.save(user=request.user)  # Explicitly set user
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                # Debug: Print validation errors
+                print("Validation Errors:", serializer.errors)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
     def put(self, request):
         try:
@@ -338,14 +355,12 @@ class EmergencyFundView(APIView):
 
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=200)
-            return Response(serializer.errors, status=400)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except EmergencyFund.DoesNotExist:
-            return Response({"message": "No emergency fund found. Please create one first."}, status=404)
+            return Response({"message": "No emergency fund found. Please create one first."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
-        
-
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class IncomeView(APIView):
     permission_classes = [IsAuthenticated]
 

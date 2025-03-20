@@ -11,6 +11,6 @@ urlpatterns = [
     path("add-expense/", AddExpenseView.as_view(), name="add-expense"),  # Add a new expense
     path("update-expense/<int:expense_id>/", UpdateExpenseView.as_view(), name="update-expense"),  # Update expense
     path("delete-expense/<int:expense_id>/", DeleteExpenseView.as_view(), name="delete-expense"),  # Delete expense
-    path("emergency-fund/", EmergencyFundView.as_view(), name="emergency-fund"),
     path("income/", IncomeView.as_view(), name="income"),
+    path("emergencyfund/", EmergencyFundView.as_view(), name="emergencyfund"),
 ]

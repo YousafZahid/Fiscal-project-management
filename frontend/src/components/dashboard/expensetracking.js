@@ -9,9 +9,11 @@ const ExpenseTracking = () => {
   const [remainingBudget, setRemainingBudget] = useState(0);
   useEffect(() => {
     fetchBudget();
-    fetchExpenses(); // Fetch data only once on component mount
+    fetchExpenses();
+    
+     // Fetch data only once on component mount
   }, []); 
-  
+
   useEffect(() => {
     calculateRemainingBudget(); // Update remaining budget when budget or totalExpenses change
   }, [budget, totalExpenses]);
@@ -69,6 +71,7 @@ const handleBudgetChange = async () => {
         console.error("No access token found. Please login.");
         return;
       }
+
     try {
       const token = localStorage.getItem("access_token");
       if (!token) {

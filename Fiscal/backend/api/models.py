@@ -66,6 +66,7 @@ class Expense(models.Model):
     category = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     amount = models.FloatField()
+    date_saved = models.DateField(default=now)
     
 
 class Budget(models.Model):
@@ -81,11 +82,9 @@ class Budget(models.Model):
 
 
 class EmergencyFund(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="emergency_funds")
-    goal_amount = models.DecimalField(max_digits=10, decimal_places=2)  # User sets this
-    monthly_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Monthly savings
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="emergency_fund")
+    goal_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Goal Amount")  # User sets this
     saved_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Total saved so far
-    date_saved = models.DateField(default=now)  # When the money was saved
 
     def progress_percentage(self):
         """Calculate progress percentage towards goal"""
@@ -95,3 +94,13 @@ class EmergencyFund(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - Goal: {self.goal_amount}, Saved: {self.saved_amount}"
+
+
+class EmergencyFundTransaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="emergency_fund_transactions")
+    emergency_fund = models.ForeignKey(EmergencyFund, on_delete=models.CASCADE, related_name="transactions")
+    amount_saved = models.DecimalField(max_digits=10, decimal_places=2)  # Amount added
+    date_saved = models.DateField(default=now)  # When the money was saved
+
+    def __str__(self):
+        return f"{self.user.username} - {self.amount_saved} on {self.date_saved}"
