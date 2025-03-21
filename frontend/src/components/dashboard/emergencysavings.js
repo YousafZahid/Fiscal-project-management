@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import Navbar from "./navbar";
-import { Progress, Modal, Select, Input, Button} from "antd"; 
+import { Progress, Modal, Select, Input} from "antd"; 
 
 const { Option } = Select;
 
@@ -12,10 +12,9 @@ const EmergencySavings = () => {
   const [progress, setProgress] = useState(0);
   const [nextSavingDate, setNextSavingDate] = useState(null);
   const [history, setHistory] = useState([]);
-  const [income, setIncome] = useState(0);
+  
   const [expenseBudget, setExpenseBudget] = useState(0);
-  //const [isModalOpen, setIsModalOpen] = useState(false);
-  // Modal State
+  
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState(3);
   const [customGoal, setCustomGoal] = useState("");
@@ -26,6 +25,7 @@ const EmergencySavings = () => {
     //fetchIncome();
     fetchBudget();
     fetchEmergencyFundTransactions();
+    
   }, []);
 
   // Fetch Emergency Fund Data
@@ -155,50 +155,57 @@ const EmergencySavings = () => {
   }
 };
 
-  // Handle Saving Money
- const handleSaveMoney = async () => {
+const handleSaveMoney = async () => {
   const saveOption = window.confirm(
     `Do you want to save the monthly budget amount (PKR ${monthlyBudget})? Click 'OK' for monthly budget or 'Cancel' to enter a custom amount.`
   );
 
-  let savedAmount;
+  let amountToSave;
   if (saveOption) {
-    savedAmount = monthlyBudget;
+    amountToSave = monthlyBudget;
   } else {
     const customAmount = prompt("Enter the amount you want to save:");
     if (!customAmount || isNaN(customAmount) || parseFloat(customAmount) <= 0) {
       alert("Invalid amount. Please enter a valid number.");
       return;
     }
-    savedAmount = parseFloat(customAmount);
+    amountToSave = parseFloat(customAmount);
   }
 
   try {
     const token = localStorage.getItem("access_token");
 
-    // Fetch the emergency fund ID dynamically
-    const emergencyFundResponse = await axiosInstance.get("emergency-funds/", {
+    // ✅ Get the emergency fund ID
+    const emergencyFundResponse = await axiosInstance.get("emergency-fund-id/", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!emergencyFundResponse.data.length) {
+    const emergencyFundId = emergencyFundResponse.data.emergency_fund_id;
+    if (!emergencyFundId) {
       alert("No emergency fund found for this user.");
       return;
     }
 
-    const emergencyFundId = emergencyFundResponse.data[0].id; // Assuming user has at least one emergency fund
-
-    // Send the transaction request
+    // ✅ Send transaction request
     await axiosInstance.post(
       "emergency-fund-transactions/",
-      {
-        amount_saved: savedAmount,
-        emergency_fund: emergencyFundId, // ✅ Use the dynamically fetched ID
-      },
+      { amount_saved: amountToSave, emergency_fund: emergencyFundId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-
+      await axiosInstance.put(
+        "emergencyfund/",
+        {}
+      )
     alert("Savings updated!");
+
+    // ✅ Manually update the savedAmount and progress immediately
+    setSavedAmount((prev) => {
+      const newSavedAmount = prev + amountToSave;
+      setProgress(goalAmount > 0 ? (newSavedAmount / goalAmount) * 100 : 0);
+      return newSavedAmount;
+    });
+
+    // ✅ Fetch latest data from API
     fetchEmergencyFund();
   } catch (error) {
     console.error("Error saving money:", error);
@@ -234,7 +241,8 @@ const EmergencySavings = () => {
           <div style={styles.card}>
             <h3>Saved Amount</h3>
             <p style={styles.amount}>PKR {savedAmount}</p>
-            <Progress percent={progress} status="active" />
+            {/* <Progress percent={progress} status="active" /> */}
+            <Progress percent={progress.toFixed(1)} status="active" />
             <button style={styles.saveBtn} onClick={handleSaveMoney}>
               Save Money
             </button>
@@ -242,17 +250,35 @@ const EmergencySavings = () => {
         </div>
 
         {/* Transaction History */}
-        <div style={styles.historyContainer}>
+        {/* <div style={styles.historyContainer}>
           <h3>Savings History</h3>
           {history.length === 0 ? (
             <p style={styles.noHistory}>No savings recorded yet.</p>
           ) : (
             <ul>
               {history.map((entry, index) => (
-                <li key={index}>{`${entry.date_saved}: PKR ${entry.saved_amount}`}</li>
+                <li key={index}>{`${entry.date_saved}: PKR ${entry.amount_saved}`}</li>
               ))}
             </ul>
           )}
+        </div> */}
+
+        <div style={styles.historyWrapper}>
+          <div style={styles.historyContainer}>
+            <h3 style={styles.historyTitle}>Savings History</h3>
+            {history.length === 0 ? (
+              <p style={styles.noHistory}>No savings recorded yet.</p>
+            ) : (
+              <ul style={styles.historyList}>
+                {history.map((entry, index) => (
+                  <li key={index} style={styles.historyItem}>
+                    <span style={styles.date}>{entry.date_saved}</span>
+                    <span style={styles.amount}>PKR {entry.amount_saved}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         {/* Goal Setting Modal */}
@@ -355,6 +381,54 @@ const styles = {
   noHistory: {
     color: "#777",
     fontSize: "14px",
+  },
+  historyWrapper: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "20px",
+  },
+  historyContainer: {
+    background: "#ffffff",
+    borderRadius: "12px",
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+    padding: "20px",
+    width: "100%",
+    maxWidth: "870px",
+    textAlign: "center",
+  },
+  historyTitle: {
+    fontSize: "20px",
+    fontWeight: "bold",
+    marginBottom: "15px",
+    color: "#333",
+  },
+  noHistory: {
+    fontSize: "16px",
+    color: "#888",
+  },
+  historyList: {
+    listStyle: "none",
+    padding: "0",
+    margin: "0",
+  },
+  historyItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    background: "#f8f9fa",
+    padding: "10px",
+    borderRadius: "8px",
+    marginBottom: "8px",
+    color: "#333",
+    fontSize: "16px",
+    fontWeight: "500",
+  },
+  date: {
+    color: "#007bff",
+    fontWeight: "bold",
+  },
+  amount: {
+    color: "#28a745",
   },
 };
 

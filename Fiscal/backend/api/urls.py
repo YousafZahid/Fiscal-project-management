@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Signup, VerifyEmail, UserLogin, SaveUserData, BudgetView, ExpenseListView, AddExpenseView, UpdateExpenseView, DeleteExpenseView, EmergencyFundView, IncomeView, EmergencyFundTransactionView
+from .views import Signup, VerifyEmail, UserLogin, SaveUserData, BudgetView, ExpenseListView, AddExpenseView, UpdateExpenseView, DeleteExpenseView, EmergencyFundView, IncomeView, EmergencyFundTransactionView, EmergencyFundIDView
 
 urlpatterns = [
     path("signup/", Signup.as_view(), name="signup"),  # Signup endpoint
@@ -14,4 +14,5 @@ urlpatterns = [
     path("income/", IncomeView.as_view(), name="income"),
     path('emergencyfund/', EmergencyFundView.as_view(), name='emergencyfund'),
     path("emergency-fund-transactions/", EmergencyFundTransactionView.as_view(), name="emergency-fund-transactions"),
+    path("emergency-fund-id/", EmergencyFundIDView.as_view(), name="user-id"),
 ]
