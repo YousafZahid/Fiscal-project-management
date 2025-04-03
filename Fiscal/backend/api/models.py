@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import now
-
+from datetime import date
+from decimal import Decimal
 
 class PersonalDetails(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="personal_details")
@@ -104,3 +105,63 @@ class EmergencyFundTransaction(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.amount_saved} on {self.date_saved}"
+  
+
+class Goal(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    target_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    saved_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    due_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def days_remaining(self):
+        """Calculate remaining days for the goal."""
+        today = date.today()
+        return (self.due_date - today).days if self.due_date >= today else 0
+
+    def goal_category(self):
+        """Determine if the goal is Short-Term, Mid-Term, or Long-Term."""
+        days = self.days_remaining()
+        if days <= 90:
+            return "Short-Term"
+        elif days <= 365:
+            return "Mid-Term"
+        else:
+            return "Long-Term"
+
+    def priority_level(self):
+        """Determine priority level based on urgency."""
+        days = self.days_remaining()
+        if days <= 90:
+            return "High Priority"
+        elif days <= 365:
+            return "Medium Priority"
+        else:
+            return "Low Priority"
+
+    def suggested_saving_plan(self):
+        """
+        Suggest how much the user should save per week/month 
+        to achieve their goal before the deadline.
+        """
+        days_left = self.days_remaining()
+        remaining_amount = float(self.target_amount) - float(self.saved_amount)
+
+        if days_left == 0:
+            return {"message": "Goal deadline reached!"}
+
+        weeks_left = days_left / 7
+        months_left = days_left / 30
+
+        return {
+            "weekly_savings": round(remaining_amount / weeks_left, 2) if weeks_left > 0 else 0,
+            "monthly_savings": round(remaining_amount / months_left, 2) if months_left > 0 else 0,
+            "days_left": days_left,
+        }
+
+    def progress_percentage(self):
+        """Calculate goal progress in %."""
+        if self.target_amount > 0:
+            return round((float(self.saved_amount) / float(self.target_amount)) * 100, 2)
+        return 0

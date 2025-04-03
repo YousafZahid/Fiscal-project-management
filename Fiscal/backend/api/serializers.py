@@ -1,4 +1,4 @@
-from .models import Budget, Expense, EmergencyFund, EmergencyFundTransaction
+from .models import Budget, Expense, EmergencyFund, EmergencyFundTransaction, Goal
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -47,3 +47,25 @@ class EmergencyFundTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmergencyFundTransaction
         fields = ['amount_saved', 'date_saved', 'emergency_fund']
+
+class GoalSerializer(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField()
+    priority = serializers.SerializerMethodField()
+    progress = serializers.SerializerMethodField()
+    saving_plan = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Goal
+        fields = ["id", "name", "target_amount", "saved_amount", "due_date", "created_at", "category", "priority", "progress", "saving_plan"]
+        
+    def get_category(self, obj):
+        return obj.goal_category()
+
+    def get_priority(self, obj):
+        return obj.priority_level()
+
+    def get_progress(self, obj):
+        return obj.progress_percentage()
+
+    def get_saving_plan(self, obj):
+        return obj.suggested_saving_plan()

@@ -611,35 +611,17 @@ const handleSaveMoney = async () => {
         </div>
 
         {/* Transaction History */}
-        {/* <div style={styles.historyContainer}>
+        <div style={styles.historyContainer}>
           <h3>Savings History</h3>
           {history.length === 0 ? (
             <p style={styles.noHistory}>No savings recorded yet.</p>
           ) : (
             <ul>
               {history.map((entry, index) => (
-                <li key={index}>{`${entry.date_saved}: PKR ${entry.amount_saved}`}</li>
+                <li key={index}>{`${entry.date_saved}: PKR ${entry.saved_amount}`}</li>
               ))}
             </ul>
           )}
-        </div> */}
-
-        <div style={styles.historyWrapper}>
-          <div style={styles.historyContainer}>
-            <h3 style={styles.historyTitle}>Savings History</h3>
-            {history.length === 0 ? (
-              <p style={styles.noHistory}>No savings recorded yet.</p>
-            ) : (
-              <ul style={styles.historyList}>
-                {history.map((entry, index) => (
-                  <li key={index} style={styles.historyItem}>
-                    <span style={styles.date}>{entry.date_saved}</span>
-                    <span style={styles.amount}>PKR {entry.amount_saved}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </div>
 
         {/* Goal Setting Modal */}

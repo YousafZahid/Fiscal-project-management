@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/common/protectedroute";
 import Home from "./pages/home";
 import EmergencySavings from "./components/dashboard/emergencysavings";
 import ExpenseTracking from "./components/dashboard/expensetracking";
+import Goals from "./components/dashboard/goals";
 
 function App() {
   return (
@@ -38,6 +39,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ExpenseTracking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/goals"
+            element={
+              <ProtectedRoute>
+                <Goals />
               </ProtectedRoute>
             }
           />
