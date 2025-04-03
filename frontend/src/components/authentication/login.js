@@ -22,8 +22,12 @@ const Login = () => {
   };
 
   return (
+    
     <div>
+      <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.82/build/spline-viewer.js"></script>
+<spline-viewer url="https://prod.spline.design/g8lwEmx91kkM2yc9/scene.splinecode"></spline-viewer>
       <h2>Login</h2>
+      
       <form onSubmit={handleLogin}>
         <label>Username:</label>
         <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />

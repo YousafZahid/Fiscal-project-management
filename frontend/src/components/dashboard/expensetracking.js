@@ -32,8 +32,6 @@ const ExpenseTracking = () => {
         },
       });
   
-      console.log("API Response:", response.data); // Debugging
-  
       setExpenses(response.data.expenses || []); // Use response.data.expenses instead of response.data
       setTotalExpenses(response.data.total_expenses || 0);
     } catch (error) {
@@ -338,3 +336,6 @@ export default ExpenseTracking;
 
 // save budget value in database
 // check for any errors
+// add subcategories
+// make frontend better
+// add a functionality to track for total monthly expenses
