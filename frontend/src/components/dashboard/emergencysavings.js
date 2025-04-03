@@ -241,8 +241,7 @@ const handleSaveMoney = async () => {
           <div style={styles.card}>
             <h3>Saved Amount</h3>
             <p style={styles.amount}>PKR {savedAmount}</p>
-            {/* <Progress percent={progress} status="active" /> */}
-            <Progress percent={progress.toFixed(1)} status="active" />
+            <Progress percent={progress} status="active" />
             <button style={styles.saveBtn} onClick={handleSaveMoney}>
               Save Money
             </button>
@@ -250,35 +249,17 @@ const handleSaveMoney = async () => {
         </div>
 
         {/* Transaction History */}
-        {/* <div style={styles.historyContainer}>
+        <div style={styles.historyContainer}>
           <h3>Savings History</h3>
           {history.length === 0 ? (
             <p style={styles.noHistory}>No savings recorded yet.</p>
           ) : (
             <ul>
               {history.map((entry, index) => (
-                <li key={index}>{`${entry.date_saved}: PKR ${entry.amount_saved}`}</li>
+                <li key={index}>{`${entry.date_saved}: PKR ${entry.saved_amount}`}</li>
               ))}
             </ul>
           )}
-        </div> */}
-
-        <div style={styles.historyWrapper}>
-          <div style={styles.historyContainer}>
-            <h3 style={styles.historyTitle}>Savings History</h3>
-            {history.length === 0 ? (
-              <p style={styles.noHistory}>No savings recorded yet.</p>
-            ) : (
-              <ul style={styles.historyList}>
-                {history.map((entry, index) => (
-                  <li key={index} style={styles.historyItem}>
-                    <span style={styles.date}>{entry.date_saved}</span>
-                    <span style={styles.amount}>PKR {entry.amount_saved}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </div>
 
         {/* Goal Setting Modal */}
@@ -381,54 +362,6 @@ const styles = {
   noHistory: {
     color: "#777",
     fontSize: "14px",
-  },
-  historyWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "20px",
-  },
-  historyContainer: {
-    background: "#ffffff",
-    borderRadius: "12px",
-    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-    padding: "20px",
-    width: "100%",
-    maxWidth: "870px",
-    textAlign: "center",
-  },
-  historyTitle: {
-    fontSize: "20px",
-    fontWeight: "bold",
-    marginBottom: "15px",
-    color: "#333",
-  },
-  noHistory: {
-    fontSize: "16px",
-    color: "#888",
-  },
-  historyList: {
-    listStyle: "none",
-    padding: "0",
-    margin: "0",
-  },
-  historyItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    background: "#f8f9fa",
-    padding: "10px",
-    borderRadius: "8px",
-    marginBottom: "8px",
-    color: "#333",
-    fontSize: "16px",
-    fontWeight: "500",
-  },
-  date: {
-    color: "#007bff",
-    fontWeight: "bold",
-  },
-  amount: {
-    color: "#28a745",
   },
 };
 

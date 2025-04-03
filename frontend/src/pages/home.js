@@ -1,14 +1,27 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-
+//import AuthButtons from "../components/authentication/AuthButtons"; 
+//import { useNavigate } from "react-router-dom";
+import Navbar from "./navbarhome";
+import HeroSection from "./herosection";
+import Features from "./features";
+import Testimonials from "./testimonial";
+import CTA from "./cta"
+import Footer from "./footer";
+import AboutUs from "./aboutus";
+import SignupSteps from "./SignupSteps";
 const Home = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   return (
     <div style={{ textAlign: "center", marginTop: "20px" }}>
-      <h1>Welcome to Our Website</h1>
-      <button onClick={() => navigate("/signup")}>Sign Up</button>
-      <button onClick={() => navigate("/login")}>Login</button>
+      <Navbar />
+      <HeroSection />
+      <AboutUs />
+      <Features />
+      <Testimonials /> 
+      <SignupSteps />
+      <CTA />
+      <Footer />
     </div>
   );
 };

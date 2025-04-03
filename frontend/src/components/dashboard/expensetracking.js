@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import Navbar from "./navbar";
 import axiosInstance from "../../api/axiosInstance";
 
@@ -38,6 +39,7 @@ const ExpenseTracking = () => {
       console.error("Error fetching expenses:", error.response);
     }
   };
+  
 
   const fetchBudget = async () => {
     try {
@@ -203,133 +205,205 @@ const handleBudgetChange = async () => {
     } catch (error) {
       console.error("Error deleting expense:", error);
     }
+
+   
 };
 
 
-  return (
-    <div>
-      <Navbar />
-      <div style={styles.container}>
-        
-        <div style={styles.budgetContainer}>
-          {/* Budget Box */}
-        <div style={styles.box} onClick={handleBudgetChange}>
-          {budget === null || isNaN(budget) ? (
-            <p style={styles.addText}>Add Budget</p>
-          ) : (
-            <>
-              <p style={styles.valueText}>{`Budget: PKR ${Number(budget).toFixed(2)}`}</p>
-              <p style={styles.updateText}>Update</p>
-            </>
-          )}
-        </div>
+return (
+  <div className="bg-gray-100 min-h-screen">
+    <Navbar />
 
+  <div className="w-full max-w-4xl mx-auto rounded-none mt-10 px-4">
+  {/* Expenses Heading */}
+  <h2 className="text-3xl font-bold text-gray-800 text-center mb-8">EXPENSES</h2>
 
-          {/* Total Expenses Box */}
-          <div style={styles.box}>
-            <p style={styles.valueText}>{`Total Expenses: PKR ${totalExpenses.toFixed(2)}`}</p>
-          </div>
+  {/* Budget Summary Boxes */}
+  <div className="bg-orange-100 shadow-lg rounded-lg p-6 flex flex-col items-center">
+    <div className="flex justify-center gap-8">
+      {/* Budget Box */}
+      <div className="w-52 h-32 bg-white text-gray-800 rounded-md flex flex-col justify-center items-center shadow-md">
+        {budget === null || isNaN(budget) ? (
+          <p className="text-lg font-semibold text-gray-500">Add Budget</p>
+        ) : (
+          <>
+            <p className="text-lg font-bold">Budget</p>
+            <p className="text-lg  text-blue-500 font-bold">{`PKR ${Number(budget).toFixed(2)}`}</p>
+          </>
+        )}
+      </div>
 
-          {/* Remaining Budget Box */}
-          <div style={styles.box}>
-            <p style={styles.valueText}>{`Remaining Budget: PKR ${remainingBudget.toFixed(2)}`}</p>
-          </div>
-        </div>
+      {/* Total Expenses Box */}
+      <div className="w-52 h-32 bg-white text-gray-800 rounded-md flex flex-col justify-center items-center shadow-md">
+        <p className="text-lg font-bold">Total Expenses</p>
+        <p className="text-lg text-red-500 font-bold">{`PKR ${totalExpenses.toFixed(2)}`}</p>
+      </div>
 
-        {/* Expense List */}
-        <div style={styles.expenseList}>
-          <h3>Expenses</h3>
-          <button style={styles.addExpenseButton} onClick={addExpense}>
-            Add Expense
-          </button>
-          {expenses.map((expense) => (
-            <div key={expense.id} style={styles.expenseItem}>
-              <div>
-                <strong>{expense.category}</strong> - {expense.description}
-                <p>{`Amount: PKR ${expense.amount}`}</p>
-              </div>
-              <div>
-                <button style={styles.actionButton} onClick={() => updateExpense(expense.id)}>
-                  Update
-                </button>
-                <button style={styles.actionButton} onClick={() => deleteExpense(expense.id)}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Remaining Budget Box */}
+      <div className="w-52 h-32 bg-white text-gray-800 rounded-md flex flex-col justify-center items-center shadow-md">
+        <p className="text-lg font-bold">Remaining Budget</p>
+        <p className="text-lg text-blue-500 font-bold">{`PKR ${remainingBudget.toFixed(2)}`}</p>
       </div>
     </div>
-  );
+
+    {/* Button Container Below */}
+    <div className="mt-6 flex gap-4">
+      <button 
+        onClick={handleBudgetChange}
+        className="secondary  text-black px-3 py-1 text-sm rounded-md hover:bg-gray-300 transition"
+      >
+        Update Budget
+      </button>
+      <button 
+        onClick={addExpense}
+        className="bg-orange-200 text-orange-700 border-orange-700 px-4 py-1 rounded-md hover:bg-orange-300 transition"
+      >
+        Add Expense
+      </button>
+    </div>
+  </div>
+</div>
+
+     
+
+  
+
+
+
+<div className="mt-8 grid  px-6 grid-cols-2 gap-6">
+  {/* Fixed Category Expenses */}
+  <div className="bg-white p-4 shadow-md rounded-lg">
+    <h3 className="text-xl font-bold text-gray-800 border-b pb-2 mb-4">Fixed Expenses</h3>
+    {expenses.filter(expense => expense.category==="Fixed").map(expense => (
+      <div 
+        key={expense.id} 
+        className="flex justify-between items-center p-4 border border-orange-200 bg-orange-50 shadow-sm rounded-md"
+      >
+        <div>
+          <strong className="text-orange-700">{expense.category}</strong> - {expense.description}
+          <p className="text-gray-600">{`Amount: PKR ${expense.amount}`}</p>
+        </div>
+        <div>
+          <button 
+            onClick={() => updateExpense(expense.id)}
+            className="bg-white text-orange-700 border border-orange-700 px-4 py-2 rounded-md hover:bg-orange-200 transition mr-2"
+          >
+            Update
+          </button>
+          <button 
+            onClick={() => deleteExpense(expense.id)}
+            className="bg-red-200 text-red-700 border-red-700 px-4 py-2 rounded-md hover:bg-red-300 transition"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {/* Variable Category Expenses */}
+  <div className="bg-white p-4 shadow-md rounded-lg">
+    <h3 className="text-xl font-bold text-gray-800 border-b pb-2 mb-4">Variable Expenses</h3>
+    {expenses.filter(expense => expense.category==="Variable").map(expense => (
+      <div 
+        key={expense.id} 
+        className="flex justify-between items-center p-4 border border-orange-200 bg-orange-50 shadow-sm rounded-md"
+      >
+        <div>
+          <strong className="text-orange-700">{expense.category}</strong> - {expense.description}
+          <p className="text-gray-600">{`Amount: PKR ${expense.amount}`}</p>
+        </div>
+        <div>
+          <button 
+            onClick={() => updateExpense(expense.id)}
+            className="bg-white text-orange-700 border border-orange-700 px-4 py-2 rounded-md hover:bg-orange-200 transition mr-2"
+          >
+            Update
+          </button>
+          <button 
+            onClick={() => deleteExpense(expense.id)}
+            className="bg-red-200 text-red-700  border-red-700 px-4 py-2 rounded-md hover:bg-red-300 transition"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+ 
+    </div>
+  
+);
+
 };
 
-const styles = {
-  container: {
-    textAlign: "center",
-    marginTop: "20px",
-  },
-  budgetContainer: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "20px",
-    marginTop: "80px",
-  },
-  box: {
-    width: "200px",
-    height: "100px",
-    border: "1px solid #ccc",
-    borderRadius: "8px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    cursor: "pointer",
-    backgroundColor: "#white",
-  },
-  addText: {
-    fontSize: "20px",
-    fontWeight: "bold",
-    color: "#888",
-  },
-  valueText: {
-    fontSize: "18px",
-    fontWeight: "bold",
-  },
-  updateText: {
-    fontSize: "20px",
-    color: "black",
-    marginTop: "5px",
-    fontWeight: "bold",
-  },
-  expenseList: {
-    marginTop: "30px",
-  },
-  expenseItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "10px",
-    border: "1px solid #ccc",
-    borderRadius: "5px",
-    marginBottom: "10px",
-  },
-  actionButton: {
-    marginLeft: "10px",
-    padding: "5px 10px",
-    fontSize: "12px",
-  },
-  addExpenseButton: {
-    marginBottom: "10px",
-    padding: "10px 20px",
-    fontSize: "14px",
-    backgroundColor: "#007BFF",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-};
+// const styles = {
+//   container: {
+//     textAlign: "center",
+//     marginTop: "20px",
+//   },
+//   budgetContainer: {
+//     display: "flex",
+//     justifyContent: "center",
+//     gap: "20px",
+//     marginTop: "80px",
+//   },
+//   box: {
+//     width: "200px",
+//     height: "100px",
+//     border: "1px solid #ccc",
+//     borderRadius: "8px",
+//     display: "flex",
+//     flexDirection: "column",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     cursor: "pointer",
+//     backgroundColor: "#white",
+//   },
+//   addText: {
+//     fontSize: "20px",
+//     fontWeight: "bold",
+//     color: "#888",
+//   },
+//   valueText: {
+//     fontSize: "18px",
+//     fontWeight: "bold",
+//   },
+//   updateText: {
+//     fontSize: "20px",
+//     color: "black",
+//     marginTop: "5px",
+//     fontWeight: "bold",
+//   },
+//   expenseList: {
+//     marginTop: "30px",
+//   },
+//   expenseItem: {
+//     display: "flex",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     padding: "10px",
+//     border: "1px solid #ccc",
+//     borderRadius: "5px",
+//     marginBottom: "10px",
+//   },
+//   actionButton: {
+//     marginLeft: "10px",
+//     padding: "5px 10px",
+//     fontSize: "12px",
+//   },
+//   addExpenseButton: {
+//     marginBottom: "10px",
+//     padding: "10px 20px",
+//     fontSize: "14px",
+//     backgroundColor: "#007BFF",
+//     color: "#fff",
+//     border: "none",
+//     borderRadius: "5px",
+//     cursor: "pointer",
+//   },
+// };
 
 export default ExpenseTracking;
 
