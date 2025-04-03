@@ -26,7 +26,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ScrollContainer, ScrollPage } from "react-scroll-motion";
+// import { ScrollContainer, ScrollPage } from "react-scroll-motion";
 
 const featureData = [
   {
