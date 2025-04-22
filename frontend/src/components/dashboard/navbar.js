@@ -29,10 +29,10 @@ const Navbar = () => {
 const navItems = [
   { path: "/dashboard", label: "Dashboard" },
   { path: "/emergencysavings", label: "Emergency Savings" },
-  { path: "/Debts", label: "Debts" },
+  { path: "/liabilities", label: "Liabilities" },
   { path: "/expencetracking", label: "Expense Tracking" },
   { path: "/Goals", label: "Goals" },
-  { path: "/Retirement Plan", label: "Retirement Plan" },
+  { path: "/retirement", label: "Retirement Plan" },
   { path: "/logout", label: "Logout" },
 ];
 

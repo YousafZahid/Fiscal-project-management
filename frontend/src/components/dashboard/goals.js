@@ -65,7 +65,7 @@ const Goals = () => {
       };
       if(editingGoal){
         await axiosInstance.put(`goals/${editingGoal.id}/`, goalData, {
-            headers: {Authorization: `Bearer ${token}`},
+            headers: { Authorization: `Bearer ${token}` },
         });
         message.success("Goal updated successfully!");
       }  else {

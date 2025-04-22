@@ -3,8 +3,8 @@ from django.urls import reverse
 from django.conf import settings
 from rest_framework import status
 from django.core.mail import send_mail
+from rest_framework import viewsets
 from rest_framework.views import APIView
-from .serializers import BudgetSerializer, ExpenseSerializer, EmergencyFundSerializer, EmergencyFundTransactionSerializer, GoalSerializer
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
@@ -12,8 +12,37 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from .models import Liability, Asset, AnnualIncome, Expense, PersonalDetails, Budget, EmergencyFund, EmergencyFundTransaction, Goal
 from django.utils.timezone import now
+from decimal import Decimal
+from .models import (Liability, 
+                     Asset, 
+                     AnnualIncome, 
+                     Expense, 
+                     PersonalDetails, 
+                     Budget, 
+                     EmergencyFund, 
+                     EmergencyFundTransaction, 
+                     Goal, 
+                     Loan, 
+                     CreditCardDebt, 
+                     Mortgage, 
+                     RetirementContribution, 
+                     RetirementPlan
+                    )
+from .serializers import (BudgetSerializer, 
+                          ExpenseSerializer, 
+                          EmergencyFundSerializer, 
+                          EmergencyFundTransactionSerializer, 
+                          GoalSerializer, 
+                          LoanSerializer, 
+                          CreditCardDebtSerializer, 
+                          MortgageSerializer, 
+                          DebtTransactionHistorySerializer, 
+                          RetirementContributionSerializer, 
+                          RetirementPlanSerializer, 
+                          AssetSerializer
+                        )
+
 
 logger = logging.getLogger(__name__)
 # Signup View
@@ -206,21 +235,28 @@ class ExpenseListView(APIView):
         user = request.user
         expenses = Expense.objects.filter(user=user)
         serializer = ExpenseSerializer(expenses, many=True)
+        print(expenses)
         total_expenses = sum(exp.amount for exp in expenses)
         return Response({"expenses": serializer.data, "total_expenses": total_expenses}, status=status.HTTP_200_OK)
+
 
 class AddExpenseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
-            data = request.data.copy()  # Create a mutable copy
-            data["user"] = request.user.id  # Assign the authenticated user
-            if "date_saved" not in data:
-                data["date_saved"] = now().date()
-            serializer = ExpenseSerializer(data=data)
+            # data = request.data.copy()  # Create a mutable copy
+            # data["user"] = request.user.id  # Assign the authenticated user
+            # print("Got user and data", data["user"])
+
+            # if "date" not in data:
+            #     data["date_saved"] = now().date()
+            #     print("date not gone through")
+
+            serializer = ExpenseSerializer(data=request.data)
             if serializer.is_valid():
-                serializer.save()
+                serializer.save(user=request.user)
+                # serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -410,16 +446,323 @@ class GoalView(APIView):
             return Response({"message": "Goal deleted successfully."}, status=status.HTTP_200_OK)
         except Goal.DoesNotExist:
             return Response({"error": "Goal not found."}, status=status.HTTP_404_NOT_FOUND)
+ 
+
+class LoanView(APIView): 
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request): 
+        loans = Loan.objects.filter(user=request.user)
+        serializer = LoanSerializer(loans, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request): 
+        serializer = LoanSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=201)
+        print(serializer.errors)
+        return Response(serializer.errors, status=400)
+
+
+class LoanDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk, user):
+        try:
+            return Loan.objects.get(pk=pk, user=user)
+        except Loan.DoesNotExist:
+            return None
+
+    def put(self, request, pk):
+        loan = self.get_object(pk, request.user)
+        if not loan:
+            return Response({"error": "Loan not found."}, status=404)
+
+        serializer = LoanSerializer(loan, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        loan = self.get_object(pk, request.user)
+        if not loan:
+            return Response({"error": "Loan not found."}, status=404)
+
+        loan.delete()
+        return Response({"message": "Loan deleted successfully."}, status=200)
+
+class CreditCardDebtView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request): 
+        cards = CreditCardDebt.objects.filter(user=request.user)
+        serializer = CreditCardDebtSerializer(cards, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        serializer = CreditCardDebtSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+
+class CreditCardDebtDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk, user):
+        try:
+            return CreditCardDebt.objects.get(pk=pk, user=user)
+        except CreditCardDebt.DoesNotExist:
+            return None
+
+    def put(self, request, pk):
+        card = self.get_object(pk, request.user)
+        if not card:
+            return Response({"error": "Credit card debt not found."}, status=404)
+
+        serializer = CreditCardDebtSerializer(card, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        card = self.get_object(pk, request.user)
+        if not card:
+            return Response({"error": "Credit card debt not found."}, status=404)
+
+        card.delete()
+        return Response({"message": "Debt deleted successfully."}, status=200)
+
+class MortgageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        mortgages = Mortgage.objects.filter(user=request.user)
+        serializer = MortgageSerializer(mortgages, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = MortgageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+
+class MortgageDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk, user):
+        try:
+            return Mortgage.objects.get(pk=pk, user=user)
+        except Mortgage.DoesNotExist:
+            return None
+
+    def put(self, request, pk):
+        mortgage = self.get_object(pk, request.user)
+        if not mortgage:
+            return Response({"error": "Mortgage not found."}, status=404)
+
+        serializer = MortgageSerializer(mortgage, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        mortgage = self.get_object(pk, request.user)
+        if not mortgage:
+            return Response({"error": "Mortgage not found."}, status=404)
+
+        mortgage.delete()
+        return Response({"message": "Mortgage deleted successfully."}, status=200)
+
+
+class AddDebtTransactionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = DebtTransactionHistorySerializer(data=request.data)
+        if serializer.is_valid():
+            liability_type = serializer.validated_data.get("liability_type")
+            amount = serializer.validated_data.get("amount")
+
+            if liability_type == "loan":
+                liability = serializer.validated_data.get("loan")
+            elif liability_type == "credit_card_debt":
+                liability = serializer.validated_data.get("credit_card_debt")
+            elif liability_type == "mortgage":
+                liability = serializer.validated_data.get("mortgage")
+            else:
+                return Response({"error": "Invalid liability type."}, status=400)
+
+            # Update remaining balance
+            if liability:
+                liability.remaining_balance = (liability.remaining_balance or 0) - amount
+                liability.save()
+
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=201)
+
+        return Response(serializer.errors, status=400)
+    
+class LiabilitiesSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+    print("Ohhh yeahhhh")
+    def get(self, request):
+        loans = Loan.objects.filter(user=request.user)
+        cards = CreditCardDebt.objects.filter(user=request.user)
+        mortgages = Mortgage.objects.filter(user=request.user)
+
+        total_loans = sum([l.remaining_balance or 0 for l in loans])
+        total_cards = sum([c.remaining_balance or 0 for c in cards])
+        total_mortgages = sum([m.remaining_balance or 0 for m in mortgages])
+
+        total_liabilities = total_loans + total_cards + total_mortgages
+
+        return Response({
+            "loan_balance": total_loans,
+            "credit_card_balance": total_cards,
+            "mortgage_balance": total_mortgages,
+            "total_liabilities": total_liabilities
+        })
+    
+
+class GetAllLiabilities(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    def get(self, request, format=None):
+        # Fetch all liabilities for each type
+        loans = Loan.objects.all()
+        credit_card_debts = CreditCardDebt.objects.all()
+        mortgages = Mortgage.objects.all()
         
+        # Serialize the data
+        loan_serializer = LoanSerializer(loans, many=True)
+        credit_card_debt_serializer = CreditCardDebtSerializer(credit_card_debts, many=True)
+        mortgage_serializer = MortgageSerializer(mortgages, many=True)
+        
+        # Combine all the data in a single response
+        data = {
+            'loans': loan_serializer.data,
+            'credit_card_debts': credit_card_debt_serializer.data,
+            'mortgages': mortgage_serializer.data
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+class RetirementPlanView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Retrieve the retirement plan for the logged-in user."""
+        try:
+            # Retrieve the retirement plan for the logged-in user
+            retirement_plan = RetirementPlan.objects.get(user=request.user)
+            
+            # Serialize the retirement plan data
+            serializer = RetirementPlanSerializer(retirement_plan)
 
-# class SaveGoalMoney(APIView):
-#     permission_classes = [IsAuthenticated]
+            # Return the retirement plan data
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-#     def put(self, request, goal_id):
-#         try: 
-#             goal = Goal.objects.get(id=goal_id, user=request.user)
-#             saved_amount = float(request.data.get("saved_amount", 0))
-#             goal.saved_amount += saved_amount
-#             goal.save()
-#             return Response({"message": "Saved Amount updated successfully"})
-#         except: 
+        except RetirementPlan.DoesNotExist:
+            # If the retirement plan doesn't exist for the user
+            return Response({"detail": "Retirement plan not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+    def post(self, request):
+        print("IN POST FUNCTION")
+        """Create a retirement plan."""
+        serializer = RetirementPlanSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        """Update an existing plan."""
+        try:
+            plan = RetirementPlan.objects.get(user=request.user)
+        except RetirementPlan.DoesNotExist:
+            return Response({"error": "Retirement plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = RetirementPlanSerializer(plan, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        """Delete an existing plan."""
+        try:
+            plan = RetirementPlan.objects.get(user=request.user)
+            plan.delete()
+            return Response({"message": "Retirement plan deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except RetirementPlan.DoesNotExist:
+            return Response({"error": "Retirement plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RetirementContributionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Retrieve the retirement contributions for the logged-in user."""
+        retirement_plan = RetirementPlan.objects.filter(user=request.user).first()
+        if retirement_plan:
+            contributions = RetirementContribution.objects.filter(retirement_plan=retirement_plan)
+            serializer = RetirementContributionSerializer(contributions, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "Retirement plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def post(self, request):
+        """Contribute to retirement plan and update savings."""
+        amount = request.data.get("amount_contributed")
+        note = request.data.get("note", "")
+
+        try:
+            plan = RetirementPlan.objects.get(user=request.user)
+        except RetirementPlan.DoesNotExist:
+            return Response({"error": "Retirement plan not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            amount = Decimal(amount)
+        except:
+            return Response({"error": "Invalid contribution amount."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update current savings in the plan
+        plan.current_savings += amount
+        plan.save()
+
+        # Create contribution log
+        contribution = RetirementContribution.objects.create(
+            user=request.user,
+            retirement_plan=plan,
+            amount_contributed=amount,
+            note=note
+        )
+
+        serializer = RetirementContributionSerializer(contribution)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+class AssetAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Retrieve the list of assets for the logged-in user."""
+        # Filter assets based on the user
+        assets = Asset.objects.filter(user=request.user)
+
+        # Serialize the asset data
+        serializer = AssetSerializer(assets, many=True)
+
+        # Return the list of assets
+        return Response(serializer.data, status=status.HTTP_200_OK)

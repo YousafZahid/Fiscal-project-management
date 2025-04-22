@@ -8,7 +8,8 @@ import Home from "./pages/home";
 import EmergencySavings from "./components/dashboard/emergencysavings";
 import ExpenseTracking from "./components/dashboard/expensetracking";
 import Goals from "./components/dashboard/goals";
-
+import Liabilities from "./components/dashboard/liabilities";
+import CreateRetirementPlan from "./components/dashboard/retirement";
 function App() {
   return (
     <Router>
@@ -47,6 +48,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Goals />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/liabilities"
+            element={
+              <ProtectedRoute>
+                <Liabilities />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/retirement"
+            element={
+              <ProtectedRoute>
+                <CreateRetirementPlan />
               </ProtectedRoute>
             }
           />
